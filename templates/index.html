@@ -1,0 +1,24 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Bienvenido al Gestor de Tareas</h2>
+    <a href="/tareas" class="btn btn-primary">Ver mis tareas</a>
+</div>
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Instrucciones:</h5>
+                <ul>
+                    <li>Utiliza el menú superior para navegar</li>
+                    <li>Haz clic en "Ver mis tareas" para gestionar tus tareas</li>
+                    <li>Puedes crear, editar y eliminar tareas</li>
+                    <li>Usa el botón "Cerrar sesión" para salir del sistema</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

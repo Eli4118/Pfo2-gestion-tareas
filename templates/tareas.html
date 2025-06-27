@@ -1,0 +1,195 @@
+<!-- templates/tareas.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4">Gestión de Tareas</h2>
+
+<!-- Modal para editar tarea -->
+<div class="modal fade" id="editarTareaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Tarea</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditarTarea">
+          <input type="hidden" id="editarId">
+          <div class="mb-3">
+            <label for="editarDescripcion" class="form-label">Descripción</label>
+            <input type="text" class="form-control" id="editarDescripcion" required>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="editarCompletada">
+            <label class="form-check-label" for="editarCompletada">Completada</label>
+          </div>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">Nueva Tarea</div>
+    <div class="card-body">
+        <form id="formTarea">
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <input type="text" class="form-control" id="descripcion" required>
+            </div>
+            <button type="submit" class="btn btn-success">Agregar Tarea</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">Mis Tareas</div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarea in tareas %}
+                <tr>
+                    <td>{{ tarea['id'] }}</td>
+                    <td>{{ tarea['descripcion'] }}</td>
+                    <td>
+                        {% if tarea['completada'] %}
+                        <span class="badge bg-success">Completada</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary toggle-btn" 
+                                    data-id="{{ tarea['id'] }}"
+                                    data-completada="{{ tarea['completada'] }}">
+                                {% if tarea['completada'] %}Marcar Pendiente{% else %}Marcar Completada{% endif %}
+                            </button>
+                            <button class="btn btn-sm btn-outline-info edit-btn" 
+                                    data-id="{{ tarea['id'] }}"
+                                    data-descripcion="{{ tarea['descripcion'] }}"
+                                    data-completada="{{ tarea['completada'] }}">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" 
+                                    data-id="{{ tarea['id'] }}">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">No hay tareas registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Agregar nueva tarea
+    document.getElementById('formTarea').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const descripcion = document.getElementById('descripcion').value;
+        
+        const response = await fetch('/api/tareas', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ descripcion })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const data = await response.json();
+            alert(`Error: ${data.error}`);
+        }
+    });
+
+    // Cambiar estado de tarea
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const completada = btn.dataset.completada === '1';
+            
+            const response = await fetch(`/api/tareas/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ completada: !completada })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error al actualizar la tarea');
+            }
+        });
+    });
+
+    // Eliminar tarea
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            
+            if (confirm('¿Estás seguro de eliminar esta tarea?')) {
+                const response = await fetch(`/api/tareas/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error al eliminar la tarea');
+                }
+            }
+        });
+    });
+
+    // Abrir modal para editar tarea
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const descripcion = btn.dataset.descripcion;
+            const completada = btn.dataset.completada === '1';
+            
+            document.getElementById('editarId').value = id;
+            document.getElementById('editarDescripcion').value = descripcion;
+            document.getElementById('editarCompletada').checked = completada;
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('editarTareaModal'));
+            modal.show();
+        });
+    });
+
+    // Guardar cambios al editar tarea
+    document.getElementById('formEditarTarea').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editarId').value;
+        const descripcion = document.getElementById('editarDescripcion').value;
+        const completada = document.getElementById('editarCompletada').checked;
+        
+        const response = await fetch(`/api/tareas/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ descripcion, completada })
+        });
+        
+        if (response.ok) {
+            // Cerrar modal y recargar
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editarTareaModal'));
+            modal.hide();
+            location.reload();
+        } else {
+            alert('Error al actualizar la tarea');
+        }
+    });
+</script>
+{% endblock %}
