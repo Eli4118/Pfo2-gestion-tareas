@@ -22,6 +22,7 @@ Sistema de gestión de tareas desarrollado como parte de la Práctica Formativa 
    ```bash
    git clone https://github.com/Eli4i18/PFO2-gestion-tareas.git
    cd PFO2-gestion-tareas
+   cd docs
    ```
 2. Instalar dependencias  
    ```bash
